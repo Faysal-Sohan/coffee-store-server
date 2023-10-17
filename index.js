@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.swu9d.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.otdrvkn.mongodb.net/?retryWrites=true&w=majority`;
 console.log(uri);
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -27,6 +27,7 @@ async function run() {
         await client.connect();
 
         const coffeeCollection = client.db('coffeeDB').collection('coffee');
+        const usersCollection = client.db('coffeeDB').collection('users');
 
         app.get('/coffee', async (req, res) => {
             const cursor = coffeeCollection.find();
@@ -75,6 +76,38 @@ async function run() {
             const query = { _id: new ObjectId(id) }
             const result = await coffeeCollection.deleteOne(query);
             res.send(result);
+        })
+
+        // user related apis
+        app.get('/user', async(req, res) => {
+            const cursor = usersCollection.find();
+            const result = await cursor.toArray();
+            res.send(result)
+        })
+
+        app.post('/user', async(req, res) => {
+            const userData = req.body
+            const result = await usersCollection.insertOne(userData)
+            res.send(result)
+        })
+
+        app.patch('/user', async(req, res) => {
+            const user = req.body;
+            const filter = { email: user.email}
+            const updatedUsers = {
+                $set: {
+                    lastLoggedIn: user.lastLoggedIn
+                }
+            }
+            const result = await usersCollection.updateOne(filter, updatedUsers)
+            res.send(result)
+        })
+
+        app.delete('/user/:id', async(req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id)}
+            const result = await usersCollection.deleteOne(query);
+            res.send(result)
         })
 
 
